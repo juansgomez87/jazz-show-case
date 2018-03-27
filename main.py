@@ -138,12 +138,7 @@ if __name__ == '__main__':
         model = load_model(filename, path_to_models)
         # make predictions
         pred = model.predict(X)
-        # normalize predictions over max
-        norm_pred = np.zeros(pred.T.shape)
-        for i in range(pred.shape[0]):
-            norm_pred[:, i] = pred[i, :] / np.max(pred[i, :])
         # organize predictions
-        # norm_org = organize_predictions(list_inst, labels_inst, norm_pred)
         org_pred = organize_predictions(list_inst, labels_inst, pred.T)
         # aggregate
         agg_pred = aggregate_predictions(org_pred)
