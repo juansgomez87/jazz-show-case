@@ -71,7 +71,7 @@ def plot_everything(list_inst, full_audio, ln_S, org_pred, agg_pred):
     ax[2].set_yticklabels(list_inst, fontsize=fontsize)
     ax[2].set_xlabel('Seconds', fontsize=fontsize)
     plt.tight_layout()
-    fig.savefig('jazz_show_case.pdf', bbox_inches='tight')
+    fig.savefig('jazz_show_case.png', bbox_inches='tight')
     plt.show()
 
 def load_model(filename, path_to_model):
