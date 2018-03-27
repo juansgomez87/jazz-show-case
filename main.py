@@ -111,7 +111,6 @@ if __name__ == '__main__':
 
     list_inst = ['as','ts','ss','tb','tp','cl']
     labels_inst = {0: 'as', 1: 'cl', 2: 'ss', 3: 'tb', 4: 'tp', 5: 'ts'}
-    # txt_order = 'as__Cannonball_Adderley__Work_Song.wav, as__Ornette_Coleman__Ramblin.wav, ts__Joe_Lovano__Central_Park_West.wav, ts__Michael_Brecker__African_Skies.wav, ss__John_Coltrance__My_Favorite_Things.wav, ss__David_Sanborn__Benny.wav, tb__Curtis_Fuller__Soul_Trombone.wav, tb__Frank_Rosolino__Moonlight_in_Vermont.wav, tp__Lee_Morgan__The_Sidewinder.wav, tp__Clifford_Brown__Tenderley.wav, cl__Buddy_DeFranco__Autumn_Leaves.wav, cl__Alvin_Batiste__Imp_and_Perry.wav'
 
     if mode == 0:
         # concatenate mix files
