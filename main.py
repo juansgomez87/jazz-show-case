@@ -45,30 +45,17 @@ def create_spectrogram(audio):
     return ln_S, X
 
 def plot_everything(list_inst, full_audio, ln_S, org_pred, agg_pred):
-    ground_truth = np.zeros((len(list_inst), 120))
-    # # ground truth
-    # for i in range(ground_truth.shape[0]):
-    #     ground_truth[i, i*20:(i+1)*20] = 1
-    # # ground_truth[5, -1] = 1
-    time_sec = np.linspace(0, 120, full_audio.shape[0])
-    fontsize = 9
-    fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(10,4), sharex=True)
-
-    ax[0].imshow(ln_S, origin='lower', aspect='auto', extent=[0,120,0,128], interpolation='nearest')
+    time_sec = np.linspace(0, 60, full_audio.shape[0])
+    fontsize = 10
+    fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(5,4), sharex=True)
+    ax[0].imshow(ln_S, origin='lower', aspect='auto', extent=[0,60,0,128], interpolation='nearest')
     ax[0].set_title('Melspectrogram', fontsize=fontsize+1)
     ax[0].set_ylabel('Mel-bands', fontsize=fontsize)
     ax[1].imshow(org_pred, aspect='auto', interpolation='nearest')
     # plot ground truth
     color = '#ffffff'
-    cnt = 0
     for j in range(0, 6):
-        for i in range(j * 20, 111, 10):
-            ax[1].add_patch(patches.Rectangle((i-0.5, j-0.5), 10, 1, fill=False, edgecolor=color, linewidth=2))
-            cnt += 1
-            if cnt == 2:
-                cnt = 0
-                j += 1
-    # ax[1].imshow(ground_truth, aspect='auto', interpolation='nearest', alpha=0.3, cmap='gray')
+        ax[1].add_patch(patches.Rectangle(((j*10)-0.5, j-0.5), 10, 1, fill=False, edgecolor=color, linewidth=2))
     ax[1].set_title('Segment Predictions', fontsize=fontsize+1)
     ax[1].set_ylabel('Labels' , fontsize=fontsize)
     ax[1].set_yticks(np.arange(len(list_inst)))
@@ -76,20 +63,14 @@ def plot_everything(list_inst, full_audio, ln_S, org_pred, agg_pred):
     ax[2].imshow(agg_pred, aspect='auto', interpolation='nearest')
     # plot ground truth
     for j in range(0, 6):
-        for i in range(j * 20, 111, 10):
-            ax[2].add_patch(patches.Rectangle((i-0.5, j-0.5), 10, 1, fill=False, edgecolor=color, linewidth=2))
-            cnt += 1
-            if cnt == 2:
-                cnt = 0
-                j += 1
+        ax[2].add_patch(patches.Rectangle(((j*10)-0.5, j-0.5), 10, 1, fill=False, edgecolor=color, linewidth=2))
     ax[2].set_title('Aggregated Predictions', fontsize=fontsize+1)
     ax[2].set_ylabel('Labels', fontsize=fontsize)
     ax[2].set_yticks(np.arange(len(list_inst)))
     ax[2].set_yticklabels(list_inst, fontsize=fontsize)
     ax[2].set_xlabel('Seconds', fontsize=fontsize)
     plt.tight_layout()
-#    plt.show()
-    fig.savefig('jazz_show_case.png', bbox_inches='tight')
+    fig.savefig('jazz_show_case.pdf', bbox_inches='tight')
     plt.show()
 
 def load_model(filename, path_to_model):
@@ -116,19 +97,10 @@ def organize_predictions(list_inst, labels_inst, norm_pred):
 
 def aggregate_predictions(pred):
     agg_pred = np.zeros(pred.shape)
-    mode = 1
-    # labelwise aggregation
-    if mode == 0:
-        chunk = 20
-        for i in range(pred.shape[0]):
-            agg_pred[:, i*chunk : (i+1)*chunk] = np.tile(np.sum(pred[:, i*chunk : (i+1)*chunk], axis=1) / chunk, (chunk, 1)).T
-            agg_pred[:, i*chunk : (i+1)*chunk] /= np.max(agg_pred[:, i*chunk : (i+1)*chunk], axis=0)
-    # clipwise aggregation
-    elif mode == 1:
-        chunk = 10
-        for i in range(pred.shape[0] * 2):
-            agg_pred[:, i*chunk : (i+1)*chunk] = np.tile(np.sum(pred[:, i*chunk : (i+1)*chunk], axis=1) / chunk, (chunk, 1)).T
-            agg_pred[:, i*chunk : (i+1)*chunk] /= np.max(agg_pred[:, i*chunk : (i+1)*chunk], axis=0)
+    chunk = 10
+    for i in range(pred.shape[0]):
+        agg_pred[:, i*chunk : (i+1)*chunk] = np.tile(np.sum(pred[:, i*chunk : (i+1)*chunk], axis=1) / chunk, (chunk, 1)).T
+        agg_pred[:, i*chunk : (i+1)*chunk] /= np.max(agg_pred[:, i*chunk : (i+1)*chunk], axis=0)
     return agg_pred
     
 
@@ -139,7 +111,7 @@ if __name__ == '__main__':
 
     list_inst = ['as','ts','ss','tb','tp','cl']
     labels_inst = {0: 'as', 1: 'cl', 2: 'ss', 3: 'tb', 4: 'tp', 5: 'ts'}
-    txt_order = 'as__Cannonball_Adderley__Work_Song.wav, as__Ornette_Coleman__Ramblin.wav, ts__Joe_Lovano__Central_Park_West.wav, ts__Michael_Brecker__African_Skies.wav, ss__John_Coltrance__My_Favorite_Things.wav, ss__David_Sanborn__Benny.wav, tb__Curtis_Fuller__Soul_Trombone.wav, tb__Frank_Rosolino__Moonlight_in_Vermont.wav, tp__Lee_Morgan__The_Sidewinder.wav, tp__Clifford_Brown__Tenderley.wav, cl__Buddy_DeFranco__Autumn_Leaves.wav, cl__Alvin_Batiste__Imp_and_Perry.wav'
+    # txt_order = 'as__Cannonball_Adderley__Work_Song.wav, as__Ornette_Coleman__Ramblin.wav, ts__Joe_Lovano__Central_Park_West.wav, ts__Michael_Brecker__African_Skies.wav, ss__John_Coltrance__My_Favorite_Things.wav, ss__David_Sanborn__Benny.wav, tb__Curtis_Fuller__Soul_Trombone.wav, tb__Frank_Rosolino__Moonlight_in_Vermont.wav, tp__Lee_Morgan__The_Sidewinder.wav, tp__Clifford_Brown__Tenderley.wav, cl__Buddy_DeFranco__Autumn_Leaves.wav, cl__Alvin_Batiste__Imp_and_Perry.wav'
 
     if mode == 0:
         # concatenate mix files
