@@ -10,6 +10,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from mpl_toolkits.axes_grid1.colorbar import colorbar
 eps = np.finfo(np.float32).eps
 
 def concatenate_files(path_to_files, list_inst):
@@ -38,49 +39,69 @@ def create_spectrogram(audio):
     # create tensor
     seg_dur = 43 # segment duration eq to 1 second
     spec_list = list()
-    for idx in range(0, ln_S.shape[1] - seg_dur + 1, seg_dur):
+    for idx in range(0, ln_S.shape[1] - seg_dur + 1, int(seg_dur * 0.5)):
         spec_list.append(ln_S[:, idx:(idx+seg_dur)])
     # print('Number of spectrograms:', len(spec_list))
     X = np.expand_dims(np.array(spec_list), axis=1)
     return ln_S, X
 
-def plot_everything(list_inst, full_audio, ln_S, org_pred, agg_pred):
-    time_sec = np.linspace(0, 60, full_audio.shape[0])
+def plot_everything(list_inst, full_audio, ln_S, org_pred_tl, agg_pred_tl, org_pred_sc, agg_pred_sc):
     fontsize = 10
     # fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(5,4), sharex=True)
-    fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(10,6), sharex=True)
-    ax[0].imshow(ln_S, origin='lower', aspect='auto', extent=[0,60,0,128], interpolation='nearest')
+    fig, ax = plt.subplots(nrows=5, ncols=1, figsize=(10,7), sharex=False)
+    ax[0].imshow(ln_S, origin='lower', aspect='auto', extent=[0,60,0,128])#, interpolation='nearest')
     ax[0].set_title('Melspectrogram', fontsize=fontsize+1)
     ax[0].set_ylabel('Mel-bands', fontsize=fontsize)
-    ax[1].imshow(org_pred, aspect='auto', interpolation='nearest')
+    im = ax[1].imshow(org_pred_tl, aspect='auto', extent=[0,60,6,0])
     # plot ground truth
     color = '#ffffff'
+    center = 0
     for j in range(0, 6):
-        ax[1].add_patch(patches.Rectangle(((j*10)-0.5, j-0.5), 10, 1, fill=False, edgecolor=color, linewidth=2))
-    ax[1].set_title('Segment Predictions', fontsize=fontsize+1)
+        ax[1].add_patch(patches.Rectangle(((j*10)-center, j-center), 10, 1, fill=False, edgecolor=color, linewidth=2))
+    ax[1].set_title('Segment Predictions with Transfer Learning', fontsize=fontsize+1)
     ax[1].set_ylabel('Labels' , fontsize=fontsize)
     ax[1].set_yticks(np.arange(len(list_inst)))
     ax[1].set_yticklabels(list_inst, fontsize=fontsize)
-    ax[2].imshow(agg_pred, aspect='auto', interpolation='nearest')
+    im = ax[2].imshow(agg_pred_tl, aspect='auto', extent=[0,60,6,0])
     # plot ground truth
     for j in range(0, 6):
-        ax[2].add_patch(patches.Rectangle(((j*10)-0.5, j-0.5), 10, 1, fill=False, edgecolor=color, linewidth=2))
-    ax[2].set_title('Aggregated Predictions', fontsize=fontsize+1)
+        ax[2].add_patch(patches.Rectangle(((j*10)-center, j-center), 10, 1, fill=False, edgecolor=color, linewidth=2))
+    ax[2].set_title('Aggregated Predictions with Transfer Learning', fontsize=fontsize+1)
     ax[2].set_ylabel('Labels', fontsize=fontsize)
     ax[2].set_yticks(np.arange(len(list_inst)))
     ax[2].set_yticklabels(list_inst, fontsize=fontsize)
-    ax[2].set_xlabel('Seconds', fontsize=fontsize)
+    
+    im = ax[3].imshow(org_pred_sc, aspect='auto', extent=[0,60,6,0])
+    # plot ground truth
+    color = '#ffffff'
+    for j in range(0, 6):
+        ax[3].add_patch(patches.Rectangle(((j*10)-center, j-center), 10, 1, fill=False, edgecolor=color, linewidth=2))
+    ax[3].set_title('Segment Predictions without Transfer Learning', fontsize=fontsize+1)
+    ax[3].set_ylabel('Labels' , fontsize=fontsize)
+    ax[3].set_yticks(np.arange(len(list_inst)))
+    ax[3].set_yticklabels(list_inst, fontsize=fontsize)
+    im = ax[4].imshow(agg_pred_sc, aspect='auto', extent=[0,60,6,0])
+    # plot ground truth
+    for j in range(0, 6):
+        ax[4].add_patch(patches.Rectangle(((j*10)-center, j-center), 10, 1, fill=False, edgecolor=color, linewidth=2))
+    ax[4].set_title('Aggregated Predictions without Transfer Learning', fontsize=fontsize+1)
+    ax[4].set_ylabel('Labels', fontsize=fontsize)
+    ax[4].set_yticks(np.arange(len(list_inst)))
+    ax[4].set_yticklabels(list_inst, fontsize=fontsize)
+    ax[4].set_xlabel('Seconds', fontsize=fontsize)
+
     plt.tight_layout()
     fig.savefig('jazz_show_case.png', bbox_inches='tight')
     plt.show()
 
-def load_model(filename, path_to_model):
-    if filename.find('solo') > 0:
-        json_filename = os.path.join(path_to_model, 'model_transfer_solo.json')
-        weights_filename = os.path.join(path_to_model, 'model_transfer_solo.hdf5')
-    elif filename.find('solo') < 0:
-        json_filename = os.path.join(path_to_model, 'model_transfer_mix.json')
-        weights_filename = os.path.join(path_to_model, 'model_transfer_mix.hdf5')
+def load_model(filename, path_to_model, trans_learn):
+    if trans_learn == True and filename.find('solo') > 0:
+            json_filename = os.path.join(path_to_model, 'model_transfer_solo.json')
+            weights_filename = os.path.join(path_to_model, 'model_transfer_solo.hdf5')
+    elif trans_learn == False and filename.find('solo') > 0:
+            json_filename = os.path.join(path_to_model, 'model_scratch_solo.json')
+            weights_filename = os.path.join(path_to_model, 'model_scratch_solo.hdf5')
+
     with open(json_filename, 'r') as json_file:
         loaded_model = json_file.read()
     model = model_from_json(loaded_model)
@@ -88,20 +109,21 @@ def load_model(filename, path_to_model):
     print('Model', json_filename, ' loaded!')
     return model
 
-def organize_predictions(list_inst, labels_inst, norm_pred):
-    org_pred = np.zeros(norm_pred.shape)
+def organize_predictions(list_inst, labels_inst, pred):
+    org_pred = np.zeros(pred.shape)
     for num, inst in enumerate(list_inst):
         for key in labels_inst.keys():
             if inst == labels_inst[key]:
-                org_pred[num, :] = norm_pred[key, :]
+                org_pred[num, :] = pred[key, :]
     return org_pred
 
 def aggregate_predictions(pred):
     agg_pred = np.zeros(pred.shape)
-    chunk = 10
+    chunk = 20
     for i in range(pred.shape[0]):
         agg_pred[:, i*chunk : (i+1)*chunk] = np.tile(np.sum(pred[:, i*chunk : (i+1)*chunk], axis=1) / chunk, (chunk, 1)).T
         agg_pred[:, i*chunk : (i+1)*chunk] /= np.max(agg_pred[:, i*chunk : (i+1)*chunk], axis=0)
+    agg_pred = agg_pred[:, :120]
     return agg_pred
     
 
@@ -124,23 +146,31 @@ if __name__ == '__main__':
     else:
         # predict files
         from keras.models import model_from_json
-        sel = int(input('Select audio: [1] mix, [2] solo\n'))
-        if sel == 1:
-            filename = 'all_audio.wav'
-        else:
-            filename = 'all_audio_solo.wav'
+        filename = 'all_audio_solo.wav'
         
         # load full_audio
         full_audio, sr = librosa.load(os.path.join(path_to_audio, filename))
         #extract spectrograms
         ln_S, X = create_spectrogram(full_audio)
-        # load prediction model
-        model = load_model(filename, path_to_models)
+        # load prediction model with TL
+        model_transf = load_model(filename, path_to_models, True)
+        # load prediction model without TL
+        model_scratch = load_model(filename, path_to_models, False)
+        # TRANSFER LEARNING!
         # make predictions
-        pred = model.predict(X)
+        pred_tl = model_transf.predict(X)
         # organize predictions
-        org_pred = organize_predictions(list_inst, labels_inst, pred.T)
+        org_pred_tl = organize_predictions(list_inst, labels_inst, pred_tl.T)
         # aggregate
-        agg_pred = aggregate_predictions(org_pred)
+        agg_pred_tl = aggregate_predictions(org_pred_tl)
+        
+        # SCRATCH LEARNING
+        # make predictions
+        pred_sc = model_scratch.predict(X)
+        # organize predictions
+        org_pred_sc = organize_predictions(list_inst, labels_inst, pred_sc.T)
+        # aggregate
+        agg_pred_sc = aggregate_predictions(org_pred_sc)
+        
         # plot!
-        plot_everything(list_inst, full_audio, ln_S, org_pred, agg_pred)
+        plot_everything(list_inst, full_audio, ln_S, org_pred_tl, agg_pred_tl, org_pred_sc, agg_pred_sc)
