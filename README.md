@@ -1,4 +1,4 @@
-# jShow Case Jazz Solo Instrument Recognition
+# Show Case - Jazz Solo Instrument Recognition
 
 ## Publication
 
