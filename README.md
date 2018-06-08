@@ -29,5 +29,4 @@ Just run the main file.
 ```
 python3 main.py
 ```
-
 ![alt text](https://github.com/juansgomez87/jazz-show-case/blob/master/jazz_show_case.png)
